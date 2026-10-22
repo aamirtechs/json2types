@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>json2types: JSON samples in, TypeScript and Pydantic types out</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#081226; --bg2:#0b1a36; --panel:#0e2148; --panel2:#0a1834;
+    --line:#1d3565; --gold:#d4af37; --gold2:#f0cd60; --ink:#eef2fb;
+    --muted:#9db1d6; --good:#3fce97; --warn:#ffb454; --bad:#ff6b6b;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, #14305e 0%, var(--bg) 55%) fixed, var(--bg); color:var(--ink); font-family:'Plus Jakarta Sans',system-ui,sans-serif; min-height:100vh}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+  .mark{width:54px;height:54px;border-radius:14px;background:linear-gradient(145deg,#12295a,#0a1834);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;font-size:22px;color:var(--gold)}
+  h1{font-family:'Sora',sans-serif;font-size:32px;margin:0;letter-spacing:.2px}
+  h1 .gold{color:var(--gold)}
+  .tag{color:var(--muted);font-size:15px;margin:4px 0 0}
+  .privacy{display:inline-flex;gap:8px;align-items:center;background:#0a2e22;border:1px solid #14532d;color:#8ff0c3;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;margin:14px 0 22px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:18px}
+  .panel h2{font-family:'Sora',sans-serif;font-size:16px;margin:0 0 4px;color:var(--gold2)}
+  .panel .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+  label.lbl{display:block;font-size:12.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+  input[type=text]{width:100%;background:#07122b;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;font-family:var(--mono);font-size:14px}
+  .samplebox{margin-bottom:12px}
+  .samplebox .shead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .samplebox .shead span{font-size:12.5px;font-weight:700;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
+  .samplebox .rm{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;font-size:12px;padding:4px 10px;cursor:pointer}
+  .samplebox .rm:hover{color:var(--bad);border-color:var(--bad)}
+  textarea{width:100%;min-height:120px;background:#07122b;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:12px;font-family:var(--mono);font-size:13px;line-height:1.55;resize:vertical}
+  textarea:focus, input[type=text]:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button.btn{background:#12295a;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 16px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer}
+  button.btn:hover{border-color:var(--gold)}
+  button.primary{background:var(--gold);border-color:var(--gold);color:#1a1405}
+  button.primary:hover{background:var(--gold2)}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.6}
+  .hint code{font-family:var(--mono);color:var(--gold2);background:#07122b;padding:1px 6px;border-radius:6px}
+  .tabs{display:flex;gap:8px;margin-bottom:12px}
+  .tabs button{background:#07122b;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:7px 16px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+  .tabs button.on{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+  pre.code{background:#050d20;border:1px solid var(--line);border-radius:12px;padding:16px;font-family:var(--mono);font-size:13px;line-height:1.65;overflow:auto;max-height:560px;margin:0;white-space:pre}
+  .report{font-size:14px;line-height:1.7}
+  .report h3{font-family:'Sora',sans-serif;font-size:14px;color:var(--gold2);margin:16px 0 4px}
+  .report h3:first-child{margin-top:0}
+  .report ul{margin:4px 0;padding-left:18px}
+  .report code{font-family:var(--mono);color:var(--gold2);font-size:12.5px}
+  .report .none{color:var(--muted)}
+  .err{display:none;background:#3a1220;border:1px solid var(--bad);color:#ffb3b3;border-radius:12px;padding:12px 16px;font-size:14px;margin:0 0 16px;font-family:var(--mono);white-space:pre-wrap}
+  footer{color:var(--muted);font-size:13px;text-align:center;margin-top:34px;line-height:1.7}
+  footer b{color:var(--gold2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark">{ }</div>
+    <div>
+      <h1>json<span class="gold">2</span>types</h1>
+      <p class="tag">Paste a few sample JSON payloads. Get clean TypeScript interfaces and Python Pydantic models, merged across every sample.</p>
+    </div>
+  </header>
+  <div class="privacy">100% offline. Nothing you paste leaves this browser tab, unlike the converter sites.</div>
+
+  <div class="err" id="errorBox"></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>1. Your samples</h2>
+      <p class="sub">More samples means better types. Fields missing from some samples become optional, and mixed types become unions.</p>
+      <label class="lbl" for="rootName">Root type name</label>
+      <input type="text" id="rootName" value="Root">
+      <div id="samples"></div>
+      <div class="row">
+        <button class="btn" id="addSampleBtn" type="button">+ Add sample</button>
+        <button class="btn" id="demoBtn" type="button">Load demo samples</button>
+        <button class="btn" id="clearBtn" type="button">Clear</button>
+      </div>
+      <p class="hint">Tip: you can also paste several JSON objects into one box separated by a line containing only <code>---</code> and they will be treated as separate samples.</p>
+      <div class="row">
+        <button class="btn primary" id="generateBtn" type="button">Generate types</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>2. Your types</h2>
+      <p class="sub">Nested objects become their own named types in both languages.</p>
+      <div class="tabs">
+        <button type="button" data-tab="ts" class="on">TypeScript</button>
+        <button type="button" data-tab="py">Python (Pydantic)</button>
+        <button type="button" data-tab="report">Inference report</button>
+      </div>
+      <div id="pane-ts">
+        <pre class="code" id="tsOut">// Your TypeScript interfaces will appear here.</pre>
+        <div class="row"><button class="btn" id="copyTs" type="button">Copy TypeScript</button></div>
+      </div>
+      <div id="pane-py" style="display:none">
+        <pre class="code" id="pyOut"># Your Pydantic models will appear here.</pre>
+        <div class="row"><button class="btn" id="copyPy" type="button">Copy Python</button></div>
+      </div>
+      <div id="pane-report" style="display:none">
+        <div class="report" id="reportOut"><p class="none">Run Generate and the inference report will appear here: which fields were made optional and why, which unions were found, and any date-like strings spotted.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <b>json2types v1.0.0</b><br>
+    Inference is only as good as your samples. Feed it real payloads, including the awkward ones, and the types get honest.
+  </footer>
+</div>
+
+<script id="engine">
+// ==== ENGINE START ====
+var DATE_RE = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+function isDateLike(s){ return typeof s === 'string' && DATE_RE.test(s); }
+function classify(v){
+  if (v === null) return 'null';
+  if (Array.isArray(v)) return 'array';
+  var t = typeof v;
+  if (t === 'number') return Number.isInteger(v) ? 'int' : 'float';
+  if (t === 'string') return 'string';
+  if (t === 'boolean') return 'boolean';
+  if (t === 'object') return 'object';
+  return 'unknown';
+}
+function newReport(){ return { optionals: [], unions: [], dateLike: [] }; }
+
+function buildKind(kind, values, path, report){
+  if (kind === 'number'){
+    return { kind: 'number', allInt: values.every(function(v){ return Number.isInteger(v); }) };
+  }
+  if (kind === 'string'){
+    var dl = values.every(isDateLike);
+    if (dl && report.dateLike.indexOf(path || '(root)') === -1) report.dateLike.push(path || '(root)');
+    return { kind: 'string', dateLike: dl };
+  }
+  if (kind === 'array'){
+    var items = [];
+    values.forEach(function(a){ a.forEach(function(i){ items.push(i); }); });
+    if (!items.length) return { kind: 'array', elem: { kind: 'unknown' } };
+    return { kind: 'array', elem: inferNode(items, (path || '(root)') + '[]', report) };
+  }
+  if (kind === 'object'){
+    var fields = {}, order = [];
+    values.forEach(function(o){
+      Object.keys(o).forEach(function(k){
+        if (!fields[k]){ fields[k] = { values: [], count: 0 }; order.push(k); }
+        fields[k].values.push(o[k]); fields[k].count++;
+      });
+    });
+    var total = values.length;
+    var flist = order.map(function(k){
+      var optional = fields[k].count < total;
+      var fpath = (path ? path + '.' : '') + k;
+      if (optional) report.optionals.push({ path: fpath, present: fields[k].count, total: total });
+      return { name: k, optional: optional, schema: inferNode(fields[k].values, fpath, report) };
+    });
+    return { kind: 'object', fields: flist };
+  }
+  return { kind: kind };
+}
+function inferNode(values, path, report){
+  var groups = {}, kinds = [];
+  values.forEach(function(v){
+    var c = classify(v);
+    if (c === 'int' || c === 'float') c = 'number';
+    if (!groups[c]){ groups[c] = []; kinds.push(c); }
+    groups[c].push(v);
+  });
+  if (!kinds.length) return { kind: 'unknown' };
+  if (kinds.length > 1){
+    report.unions.push({ path: path || '(root)', types: kinds.slice() });
+    return { kind: 'union', members: kinds.map(function(k){ return buildKind(k, groups[k], path, report); }) };
+  }
+  return buildKind(kinds[0], values, path, report);
+}
+function pascal(s){
+  var p = String(s).replace(/[^a-zA-Z0-9]+/g, ' ').split(' ').filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join('');
+  return p || 'Field';
+}
+function assignNames(schema, rootName){
+  var used = {}, defs = [];
+  function nameFor(base){
+    var n = base || 'Type';
+    if (!/^[A-Za-z]/.test(n)) n = 'Type' + n;
+    if (!used[n]){ used[n] = 1; return n; }
+    var i = 2; while (used[n + i]) i++;
+    used[n + i] = 1; return n + i;
+  }
+  function walk(node, suggested){
+    if (node.kind === 'object'){
+      node.typeName = nameFor(suggested);
+      defs.push(node);
+      node.fields.forEach(function(f){ walk(f.schema, pascal(f.name)); });
+    } else if (node.kind === 'array'){ walk(node.elem, suggested); }
+    else if (node.kind === 'union'){ node.members.forEach(function(m){ walk(m, suggested); }); }
+  }
+  walk(schema, rootName || 'Root');
+  return defs;
+}
+// ---- TypeScript ----
+function tsType(node){
+  switch (node.kind){
+    case 'string': return 'string';
+    case 'number': return 'number';
+    case 'boolean': return 'boolean';
+    case 'null': return 'null';
+    case 'unknown': return 'unknown';
+    case 'array': { var e = tsType(node.elem); return (node.elem.kind === 'union' ? '(' + e + ')' : e) + '[]'; }
+    case 'union': return node.members.map(tsType).join(' | ');
+    case 'object': return node.typeName;
+    default: return 'unknown';
+  }
+}
+function tsKey(k){ return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k) ? k : JSON.stringify(k); }
+function genTS(defs){
+  return defs.slice().reverse().map(function(d){
+    var lines = d.fields.map(function(f){
+      var note = f.schema.kind === 'string' && f.schema.dateLike ? ' // date-like string' : '';
+      return '  ' + tsKey(f.name) + (f.optional ? '?' : '') + ': ' + tsType(f.schema) + ';' + note;
+    });
+    return 'export interface ' + d.typeName + ' {\n' + lines.join('\n') + '\n}';
+  }).join('\n\n');
+}
+// ---- Python Pydantic ----
+var PY_KEYWORDS = {};
+'False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case'.split(' ').forEach(function(w){ PY_KEYWORDS[w] = 1; });
+function pyName(key){
+  var n = String(key).replace(/[^A-Za-z0-9_]/g, '_');
+  if (/^[0-9]/.test(n)) n = '_' + n;
+  if (PY_KEYWORDS[n]) n = n + '_';
+  return n || 'field';
+}
+function pyType(node, st){
+  switch (node.kind){
+    case 'string': return 'str';
+    case 'number': return node.allInt ? 'int' : 'float';
+    case 'boolean': return 'bool';
+    case 'null': st.optional = true; return 'Any';
+    case 'unknown': st.any = true; return 'Any';
+    case 'array': st.list = true; return 'List[' + pyType(node.elem, st) + ']';
+    case 'object': return node.typeName;
+    case 'union': {
+      var hasNull = node.members.some(function(m){ return m.kind === 'null'; });
+      var rest = node.members.filter(function(m){ return m.kind !== 'null'; });
+      var parts = rest.map(function(m){ return pyType(m, st); });
+      var base = parts.length > 1 ? (st.union = true, 'Union[' + parts.join(', ') + ']') : parts[0];
+      if (hasNull){ st.optional = true; return 'Optional[' + base + ']'; }
+      return base;
+    }
+    default: st.any = true; return 'Any';
+  }
+}
+function genPython(defs){
+  var st = { any: false, list: false, union: false, optional: false, field: false };
+  var bodies = defs.slice().reverse().map(function(d){
+    var lines = d.fields.map(function(f){
+      var fst = { any: false, list: false, union: false, optional: false, field: false };
+      var t = pyType(f.schema, fst);
+      Object.keys(fst).forEach(function(k){ if (fst[k]) st[k] = true; });
+      var name = pyName(f.name), alias = name !== f.name;
+      if (alias) st.field = true;
+      var opt = f.optional || fst.optional;
+      var typeStr = t;
+      if (opt && t.indexOf('Optional[') !== 0){ st.optional = true; typeStr = 'Optional[' + t + ']'; }
+      var rhs = '';
+      if (alias && opt) rhs = ' = Field(default=None, alias=' + JSON.stringify(f.name) + ')';
+      else if (alias) rhs = ' = Field(..., alias=' + JSON.stringify(f.name) + ')';
+      else if (opt) rhs = ' = None';
+      return '    ' + name + ': ' + typeStr + rhs;
+    });
+    return 'class ' + d.typeName + '(BaseModel):\n' + (lines.length ? lines.join('\n') : '    pass');
+  });
+  var typing = [];
+  if (st.any) typing.push('Any');
+  if (st.list) typing.push('List');
+  if (st.optional) typing.push('Optional');
+  if (st.union) typing.push('Union');
+  var head = '';
+  if (typing.length) head += 'from typing import ' + typing.join(', ') + '\n';
+  head += 'from pydantic import BaseModel' + (st.field ? ', Field' : '') + '\n';
+  return head + '\n\n' + bodies.join('\n\n\n');
+}
+// ---- Samples + orchestration ----
+function splitSegments(text){
+  return String(text).split(/^\s*---\s*$/m).map(function(s){ return s.trim(); }).filter(Boolean);
+}
+function parseSamples(texts){
+  var segments = [];
+  texts.forEach(function(t){ splitSegments(t || '').forEach(function(seg){ segments.push(seg); }); });
+  if (!segments.length) return { error: 'Add at least one JSON sample first.' };
+  var samples = [];
+  for (var i = 0; i < segments.length; i++){
+    try { samples.push(JSON.parse(segments[i])); }
+    catch (e) { return { error: 'Sample ' + (i + 1) + ' has invalid JSON: ' + e.message }; }
+  }
+  return { samples: samples };
+}
+function runInference(texts, rootName){
+  var parsed = parseSamples(texts);
+  if (parsed.error) return { error: parsed.error };
+  var report = newReport();
+  var schema = inferNode(parsed.samples, '', report);
+  if (schema.kind !== 'object' && schema.kind !== 'union'){
+    // Wrap a non-object root in the chosen name via a type alias style single def fallback
+    var defs0 = assignNames(schema, rootName);
+    if (!defs0.length){
+      var r2 = newReport(); r2 = report;
+      var tsAlias = 'export type ' + (pascal(rootName) || 'Root') + ' = ' + tsType(schema) + ';';
+      var stA = { any: false, list: false, union: false, optional: false, field: false };
+      var pyA = pyType(schema, stA);
+      var typingA = []; if (stA.any) typingA.push('Any'); if (stA.list) typingA.push('List'); if (stA.optional) typingA.push('Optional'); if (stA.union) typingA.push('Union');
+      var pyAlias = (typingA.length ? 'from typing import ' + typingA.join(', ') + '\n\n' : '') + pascal(rootName) + ' = ' + pyA + '\n';
+      return { ts: tsAlias, py: pyAlias, report: report, sampleCount: parsed.samples.length };
+    }
+  }
+  var defs = assignNames(schema, rootName);
+  return { ts: genTS(defs), py: genPython(defs), report: report, sampleCount: parsed.samples.length };
+}
+// ==== ENGINE END ====
+</script>
+
+<script>
+(function(){
+  var samplesEl = document.getElementById('samples');
+  var errorBox = document.getElementById('errorBox');
+  var tsOut = document.getElementById('tsOut'), pyOut = document.getElementById('pyOut'), reportOut = document.getElementById('reportOut');
+  var last = { ts: '', py: '' };
+
+  function addSample(value){
+    var box = document.createElement('div'); box.className = 'samplebox';
+    var n = samplesEl.querySelectorAll('.samplebox').length + 1;
+    box.innerHTML = '<div class="shead"><span>Sample</span><button type="button" class="rm">Remove</button></div>';
+    var ta = document.createElement('textarea'); ta.placeholder = '{ "id": 1, "name": "..." }'; ta.value = value || '';
+    box.appendChild(ta);
+    box.querySelector('.rm').addEventListener('click', function(){ box.remove(); renumber(); });
+    samplesEl.appendChild(box); renumber();
+    return ta;
+  }
+  function renumber(){
+    samplesEl.querySelectorAll('.samplebox .shead span').forEach(function(s, i){ s.textContent = 'Sample ' + (i + 1); });
+  }
+  function texts(){
+    return Array.prototype.map.call(samplesEl.querySelectorAll('textarea'), function(t){ return t.value; });
+  }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+  var DEMO = [
+    JSON.stringify({ id: 1, name: 'Ada Lovelace', email: 'ada@example.com', active: true, loginCount: 12, rating: 4.5, createdAt: '2024-01-15T10:30:00Z', tags: ['admin', 'beta'], address: { street: '12 Analytical Way', city: 'London', zip: 'N1 9GU' } }, null, 2),
+    JSON.stringify({ id: 'u-2049', name: 'Alan Turing', active: false, loginCount: 3, rating: 5, createdAt: '2024-02-01T08:00:00Z', tags: [], address: { street: '1 Enigma Road', city: 'Manchester', zip: 'M1 2AB' } }, null, 2),
+    JSON.stringify({ id: 3, name: 'Grace Hopper', email: 'grace@example.com', active: true, loginCount: 30, rating: 4.8, createdAt: '2024-03-20T14:45:00Z', tags: ['navy'], address: { street: '9 Compiler Lane', city: 'New York', zip: '10001' } }, null, 2)
+  ];
+
+  function generate(){
+    errorBox.style.display = 'none';
+    var rootName = document.getElementById('rootName').value.trim() || 'Root';
+    var res = runInference(texts(), rootName);
+    if (res.error){ errorBox.textContent = res.error; errorBox.style.display = 'block'; return; }
+    last = res;
+    tsOut.textContent = res.ts;
+    pyOut.textContent = res.py;
+    var r = res.report, html = '';
+    html += '<h3>Samples used</h3><p>' + res.sampleCount + '</p>';
+    html += '<h3>Fields made optional</h3>';
+    html += r.optionals.length ? '<ul>' + r.optionals.map(function(o){ return '<li><code>' + esc(o.path) + '</code>: present in ' + o.present + ' of ' + o.total + ' samples at that level, so it is optional.</li>'; }).join('') + '</ul>' : '<p class="none">None. Every field appeared in every sample.</p>';
+    html += '<h3>Unions found</h3>';
+    html += r.unions.length ? '<ul>' + r.unions.map(function(u){ return '<li><code>' + esc(u.path) + '</code>: saw ' + u.types.map(esc).join(', ') + ', emitted as a union.</li>'; }).join('') + '</ul>' : '<p class="none">None. No field changed type between samples.</p>';
+    html += '<h3>Date-like strings</h3>';
+    html += r.dateLike.length ? '<ul>' + r.dateLike.map(function(p){ return '<li><code>' + esc(p) + '</code>: looks like an ISO date. Emitted as a string in TypeScript (with a comment) and str in Python.</li>'; }).join('') + '</ul>' : '<p class="none">None detected.</p>';
+    reportOut.innerHTML = html;
+  }
+
+  document.getElementById('addSampleBtn').addEventListener('click', function(){ addSample(''); });
+  document.getElementById('clearBtn').addEventListener('click', function(){ samplesEl.innerHTML = ''; addSample(''); tsOut.textContent = '// Your TypeScript interfaces will appear here.'; pyOut.textContent = '# Your Pydantic models will appear here.'; errorBox.style.display = 'none'; });
+  document.getElementById('demoBtn').addEventListener('click', function(){ samplesEl.innerHTML = ''; DEMO.forEach(function(d){ addSample(d); }); document.getElementById('rootName').value = 'User'; generate(); });
+  document.getElementById('generateBtn').addEventListener('click', generate);
+
+  function copy(text, btn){
+    function done(){ var old = btn.textContent; btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = old; }, 1400); }
+    if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(done); } else { done(); }
+  }
+  document.getElementById('copyTs').addEventListener('click', function(){ copy(last.ts || tsOut.textContent, this); });
+  document.getElementById('copyPy').addEventListener('click', function(){ copy(last.py || pyOut.textContent, this); });
+
+  document.querySelectorAll('.tabs button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.tabs button').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      ['ts', 'py', 'report'].forEach(function(k){ document.getElementById('pane-' + k).style.display = (k === b.dataset.tab) ? '' : 'none'; });
+    });
+  });
+
+  addSample('');
+})();
+</script>
+</body>
+</html>
